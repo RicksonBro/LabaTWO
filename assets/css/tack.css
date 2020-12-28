@@ -1,0 +1,30 @@
+#users_table {
+    font-family: cursive;
+    border-collapse: collapse;
+    width: 100%;
+}
+
+
+#users_table td, #users_table th {
+    border: 2px solid #1ebfff;
+    padding: 10px;
+}
+
+
+
+#users_table tr:hover { background: #9fcadb;}
+
+
+#users_table th {
+    margin-top: 2px;
+    padding-top: 12px;
+    padding-bottom: 12px;
+    text-align: left;
+    background-color: #1ebfff;
+    color: #ffffff;
+}
+
+.userid{
+    color: #000000;
+    background-color: #ffffff;
+}

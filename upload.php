@@ -1,112 +1,85 @@
 <?php
-session_start();
-require_once("login.php");
-$target_dir = "images/";
-$link=mysqli_connect("localhost", "root", "", "lab_2");
-
+$target_dir = "public/images/";
 $target_file = $target_dir . basename($_FILES["fileToUpload"]["name"]);
 $uploadOk = 1;
 $imageFileType = strtolower(pathinfo($target_file,PATHINFO_EXTENSION));
 
+$msg = "Photo has been changed!";
+// Check if image file is a actual image or fake image
 if(isset($_POST["submit"])) {
 	$check = getimagesize($_FILES["fileToUpload"]["tmp_name"]);
     if($check !== false) {
-       
     	$uploadOk = 1;
 	} else {
-        echo "File is not an image.";
+        $msg = "File is not an image.";
     	$uploadOk = 0;
 	}
 }
+$file_name = basename( $_FILES["fileToUpload"]["name"]);
 
+// Check if file already exists
 if (file_exists($target_file)) {
-    echo "Sorry, file already exists.";
 	$uploadOk = 0;
 }
-
+// Check file size
 if ($_FILES["fileToUpload"]["size"] > 500000) {
-    echo "Sorry, your file is too large.";
+  $msg = "Sorry, your file is too large.";
 	$uploadOk = 0;
 }
-
+// Allow certain file formats
 if($imageFileType != "jpg" && $imageFileType != "png" && $imageFileType != "jpeg"
 && $imageFileType != "gif" ) {
-    echo "Sorry, only JPG, JPEG, PNG & GIF files are allowed.";
+  $msg = "Sorry, only JPG, JPEG, PNG & GIF files are allowed.";
 	$uploadOk = 0;
 }
-
-if ($uploadOk == 0) {
-    echo "Sorry, your file was not uploaded.";
-
-} else {
-    if (move_uploaded_file($_FILES["fileToUpload"]["tmp_name"], $target_file)) {
-       
-
-
-
-
-
-
-
-
-    $err = [];
-
-    // проверям логин
-    if(!preg_match("/^[a-zA-Z0-9]+$/",$_POST['first_name']))
-    {
-        $err[] = "Имя может состоять только из букв английского алфавита и цифр";
-    }
-
-    if(strlen($_POST['first_name']) < 3 or strlen($_POST['first_name']) > 30)
-    {
-        $err[] = "Логин должен быть не меньше 3-х символов и не больше 30";
-    }
-
-    // проверяем, не сущестует ли пользователя с таким именем
-    $query = mysqli_query($link, "SELECT id FROM users WHERE first_name='".mysqli_real_escape_string($link, $_POST['first_name'])."'");
-    if(mysqli_num_rows($query) > 0)
-    {
-        $err[] = "Пользователь с таким именем уже существует в базе данных";
-    }
-
-    // Если нет ошибок, то добавляем в БД нового пользователя
-    if(count($err) == 0)
-    {
-
-
-        // Убераем лишние пробелы и делаем двойное хеширование
-        $password = $_POST['password'];
-        $first_name = $_POST['first_name'];
-        $last_name = $_POST['last_name'];
-        $role_id = $_POST['role_id'];
-
-
-		$photo =  basename( $_FILES["fileToUpload"]["name"]);
-        mysqli_query($link,"INSERT INTO users SET first_name='".$first_name."', password='".$password."',  last_name = '".$last_name."', role_id = '".$role_id."', photo='".$photo."'");
-
-        mysqli_query($link,"INSERT INTO roles SET title='".$role_id."'");
-
-
-        
-    }
-    else
-    {
-        print "<b>При регистрации произошли следующие ошибки:</b><br>";
-        foreach($err AS $error)
-        {
-            print $error."<br>";
-        }
-    }
-
-
-
-
-
-         exit();
+// Check if $uploadOk is not set to 0 by an error
+if ($uploadOk != 0) {
+  if (move_uploaded_file($_FILES["fileToUpload"]["tmp_name"], $target_file)) {
+    $msg = "The file ".$file_name." has been uploaded.";
 	} else {
-        echo "Sorry, there was an error uploading your file.";
+    $msg = "Sorry, there was an error uploading your file.";
 	}
 }
 
+require_once "pages/connection.php";
+$sql = "UPDATE users SET photo='$file_name' WHERE id=".$_GET['id'];
+$res = mysqli_query($conn, $sql);
 
+if (!$res) {
+	printf("Error: %s\n", mysqli_error($conn));
+	exit();
+}
 ?>
+
+<!DOCTYPE>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>Success</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+<body>
+  <header>
+    <div class="d-flex flex-column flex-md-row align-items-center p-3 px-md-4 mb-3 bg-white">
+				<h4 class="my-0 mr-md-auto font-weight-normal">Photo</h4>
+        <nav class="my-2 my-md-0 mr-md-3">
+            <?php
+              session_start();
+              if($_SESSION['auth']=='true' && $_SESSION['admin']=='true'){
+                $url = "./pages/restricted_admin.php?id=".$_SESSION['admin_id'];
+              } elseif($_SESSION['auth']=='true' ){
+                $url = "./pages/restricted.php?id=".$_SESSION['id'];
+              } else {
+                $url = "/";
+              }
+            ?>
+            <a class="btn btn-outline-success btn-lg" href="<?php echo $url; ?>">Back</a>
+        </nav>
+    </div>
+
+  </header>
+  <div class="container">
+    <h3><?php echo $msg ?></h3>
+  </div>
+</body>
